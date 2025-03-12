@@ -13,11 +13,15 @@ import Foundation
  posthog-ios stores data either to file or to UserDefaults in order to support tvOS. As recordings won't work on tvOS anyways and we have no tvOS users so far,
  we are opting to only support iOS via File storage.
  */
-func applicationSupportDirectoryURL() -> URL {
-    let url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
+func applicationSupportDirectoryURL(storageSuffix: String? = nil) -> URL {
+    var url = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first!
     let bundleIdentifier = getBundleIdentifier()
 
-    return url.appendingPathComponent(bundleIdentifier)
+    url = url.appendingPathComponent(bundleIdentifier, isDirectory: true)
+    if let storageSuffix {
+        url = url.appendingPathComponent(storageSuffix, isDirectory: true)
+    }
+    return url
 }
 
 /**
@@ -43,7 +47,10 @@ func appGroupContainerUrl(config: PostHogConfig) -> URL? {
         .appendingPathComponent("Library/Application Support/")
         .appendingPathComponent(bundleIdentifier)
 
-    if let url {
+    if var url {
+        if let storageSuffix = config.storageSuffix {
+            url = url.appendingPathComponent(storageSuffix)
+        }
         createDirectoryAtURLIfNeeded(url: url)
         return directoryExists(url) ? url : nil
     }
@@ -163,7 +170,7 @@ class PostHogStorage {
      we want to use a shared container for storing data so that extensions correctly identify a user (and batch process events)
      */
     private static func getBaseAppFolderUrl(from configuration: PostHogConfig) -> URL {
-        appGroupContainerUrl(config: configuration) ?? applicationSupportDirectoryURL()
+        appGroupContainerUrl(config: configuration) ?? applicationSupportDirectoryURL(storageSuffix: configuration.storageSuffix)
     }
 
     private static func migrateItem(at sourceUrl: URL, to destinationUrl: URL, fileManager: FileManager) throws {

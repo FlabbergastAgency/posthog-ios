@@ -44,6 +44,8 @@ import Foundation
     /// Default: nil
     @objc public var appGroupIdentifier: String?
 
+    @objc public var storageSuffix: String?
+
     /// Internal
     /// Do not modify it, this flag is read and updated by the SDK via feature flags
     @objc public var snapshotEndpoint: String = "/s/"
